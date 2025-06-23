@@ -7,10 +7,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddCors(); //adds header to our HTTP response to allow other apps to access our API
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline (middleware).
+//configure our CORS since we added it to our service. 
+//since our React app is on localhost:3000, configure it in the WithOrigins() method
+app.UseCors(options => options
+    .AllowAnyHeader()
+    .AllowAnyMethod()
+    .WithOrigins("http://localhost:3000", "https://localhost:3000")
+);
 app.MapControllers(); // this provides routing for the controllers
 
 using var scope = app.Services.CreateScope(); // disposes unused resources that is no longer in scope
