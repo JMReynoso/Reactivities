@@ -25,4 +25,9 @@ public class Activity
     public required string Venue { get; set; }
     public double Latitude { get; set; }
     public double Longitude { get; set; }
+
+    public static implicit operator System.Diagnostics.Activity(Activity v)
+    {
+        throw new NotImplementedException();
+    }
 }
