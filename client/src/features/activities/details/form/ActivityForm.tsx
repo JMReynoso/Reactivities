@@ -1,19 +1,17 @@
 import { Box, Button, Paper, TextField, Typography } from "@mui/material";
 import type { Activity } from "../../../../lib/types";
 import type { FormEvent } from "react";
+import { useActivities } from "../../../../lib/hooks/useActivities";
 
 type Props = {
   activity?: Activity;
   closeForm: () => void;
-  submitForm: (activity: Activity) => void;
 };
 
-export default function ActivityForm({
-  activity,
-  closeForm,
-  submitForm,
-}: Props) {
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+export default function ActivityForm({ activity, closeForm }: Props) {
+  const { updateActivity, createActivity } = useActivities();
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const formData = new FormData(event.currentTarget); //stores form data from the box component
@@ -22,11 +20,19 @@ export default function ActivityForm({
 
     formData.forEach((value, key) => {
       data[key] = value;
-    });  //places all data from input fields into formData
+    }); //places all data from input fields(formData) into data variable
 
-    if(activity) data.id = activity.id; //if we are currently editing an activity
-
-    submitForm(data as unknown as Activity);
+    // if activity is provided, it means we are editing an existing activity
+    if (activity) {
+      data.id = activity.id; //if we are currently editing an activity
+      await updateActivity.mutateAsync(data as unknown as Activity); //update the activity with the new data using custom hook
+      closeForm(); //close the form after updating
+    }
+    // if activity is not provided, it means we are creating a new activity
+    else {
+      await createActivity.mutateAsync(data as unknown as Activity); //if we are creating a new activity, use the custom hook to create it
+      closeForm(); //close the form after creating
+    }
   };
 
   return (
@@ -58,7 +64,11 @@ export default function ActivityForm({
           name="date"
           label="Date"
           type="date"
-          defaultValue={activity?.date}
+          defaultValue={
+            activity?.date
+              ? new Date(activity.date).toISOString().split("T")[0]
+              : new Date().toISOString().split("T")[0]
+          } // format date to YYYY-MM-DD
         />
         <TextField name="city" label="City" defaultValue={activity?.city} />
         <TextField name="venue" label="Venue" defaultValue={activity?.venue} />
@@ -66,7 +76,12 @@ export default function ActivityForm({
           <Button onClick={closeForm} color="inherit">
             Cancel
           </Button>
-          <Button type="submit" color="success" variant="contained">
+          <Button
+            type="submit"
+            color="success"
+            variant="contained"
+            disabled={updateActivity.isPending || createActivity.isPending} // disable button while mutation is pending
+          >
             Submit
           </Button>
         </Box>

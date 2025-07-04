@@ -8,18 +8,16 @@ import {
   Typography,
 } from "@mui/material";
 import type { Activity } from "../../../lib/types";
+import { useActivities } from "../../../lib/hooks/useActivities";
 
 type Props = {
   activity: Activity;
   selectActivity: (id: string) => void;
-  deleteActivity: (id: string) => void;
 };
 
-export default function ActivityCard({
-  activity,
-  selectActivity,
-  deleteActivity,
-}: Props) {
+export default function ActivityCard({ activity, selectActivity }: Props) {
+  const { deleteActivity } = useActivities();
+
   return (
     <Card sx={{ borderRadius: 5 }}>
       <CardContent sx={{ marginLeft: 2, marginRight: "auto" }}>
@@ -51,10 +49,11 @@ export default function ActivityCard({
             View
           </Button>
           <Button
-            onClick={() => deleteActivity(activity.id)}
+            onClick={async () => deleteActivity.mutateAsync(activity.id)}
             size="medium"
             variant="contained"
             color="error"
+            disabled={deleteActivity.isPending}
           >
             Delete
           </Button>
